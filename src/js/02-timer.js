@@ -6,11 +6,13 @@ const refs = {
     hours: document.querySelector('[data-hours]'),
     minutes: document.querySelector('[data-minutes]'),
     seconds: document.querySelector('[data-seconds]'),
-    input: document.querySelector('#datetime-picker'),
+    inputDate: document.querySelector('#datetime-picker'),
     startBtn: document.querySelector('button[data-start]'),
 }
 
+let timerId = null; // задаем переменную для хранения ID таймера для дальнейшего сброса.
 refs.startBtn.disabled = true;
+refs.startBtn.addEventListener('click', onTimerStart);
 
 const options = {
   enableTime: true,
@@ -18,33 +20,54 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (selectedDates[0] < Date.now()) {
+    if (selectedDates[0] <= Date.now()) {
         alert("Please choose a date in the future");
     } else {
         refs.startBtn.disabled = false;
-        refs.startBtn.addEventListener('click', onTimerStart);
     };
   },
 };
+
 flatpickr('#datetime-picker', options);
 
+//Функция запуска таймера через SetInterval//
 function onTimerStart() {
-  const second = 1000;
-  const minute = second * 60;
-  const hour = minute * 60;
-  const day = hour * 24;
-//   const ms = options.onClose(selectedDates[0]) - Date.now();
+    refs.inputDate.disabled = true;
+    refs.startBtn.disabled = true;
+    timerId = setInterval(updateTimer, 1000);
+}
 
-  // Remaining days
-  refs.days = Math.floor(ms / day);
-  // Remaining hours
-  refs.hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
-  refs.minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
-  refs.seconds = Math.floor((((ms % day) % hour) % minute) / second);
+//
+function updateTimer() {
+    const currentTime = new Date(refs.inputDate.value); // принимаем выбранную дату из инпута//
+    const deltaTime = currentTime - Date.now();//вычисляем эту дату в мс, (выбранная дата - текущая дата)//
+    const { days, hours, minutes, seconds } = convertMs(deltaTime); //деструктурируем и передаем функцию в конвертер//
 
-//   return { days, hours, minutes, seconds };
+    //присваивание значаений в textContent всех элементов с подставлением "0" при необходимости
+    refs.days.textContent = addLeadingZero(days);
+    refs.hours.textContent = addLeadingZero(hours);
+    refs.minutes.textContent = addLeadingZero(minutes);
+    refs.seconds.textContent = addLeadingZero(seconds);
+
+    if (deltaTime < 1000) {
+        clearInterval(timerId);
+        refs.inputDate.disabled = false;
+    }
+}
+
+//Функция конвертации милисекунд в секунды/минуты/часы/дни//
+function convertMs(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60) % 60;
+      const hours = Math.floor(seconds / 3600) % 24;
+      const days = Math.floor(seconds / 86400);
+  
+      return { days, hours, minutes, seconds: seconds % 60 };
+  }
+
+//Функция для подставки 0//
+function addLeadingZero(value) {
+    return `${value}`.padStart(2, '0');
 }
 
 
