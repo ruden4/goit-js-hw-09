@@ -16,5 +16,5 @@ body.style.backgroundColor = `#${Math.floor(Math.random() * 16777215).toString(1
 
 function stopChangingColors () {
     clearInterval(intervalId);
-    // startBtn.disabled = false;
+    startBtn.disabled = false;
 }
